@@ -41,6 +41,7 @@ import cascading.property.AppProps;
 import cascading.scheme.hadoop.TextDelimited;
 import cascading.tap.Tap;
 import cascading.tap.hadoop.Hfs;
+import cascading.tap.hadoop.Lfs;
 import cascading.tuple.Fields;
 
 
@@ -71,7 +72,10 @@ public class
     Tap wcTap = new Hfs( new TextDelimited( true, "\t" ), wcPath );
 
     Fields stop = new Fields( "stop" );
-    Tap stopTap = new Hfs( new TextDelimited( stop, true, "\t" ), stopPath );
+    Tap stopTap = Boolean.valueOf((String)properties.get("cacheStopwords"))
+        ? new Hfs( new TextDelimited( stop, true, "\t" ), stopPath )
+        : new Lfs( new TextDelimited( stop, true, "\t" ), stopPath );
+
 
     // specify a regex operation to split the "document" text lines into a token stream
     Fields token = new Fields( "token" );

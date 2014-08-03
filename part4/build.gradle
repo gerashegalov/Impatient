@@ -34,7 +34,7 @@ repositories {
   maven{ url 'http://conjars.org/repo/' }
 }
 
-ext.cascadingVersion = '3.0.0-wip-dev'
+ext.cascadingVersion = '2.6.0-wip-dev'
 ext.hadoopVersion = '3.0.0-SNAPSHOT'
 
 dependencies {

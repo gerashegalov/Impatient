@@ -18,8 +18,10 @@
  * limitations under the License.
  */
 
-package impatient;
+package impatient.part4;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.Properties;
 
 import cascading.flow.Flow;
@@ -46,13 +48,21 @@ public class
   Main
   {
   public static void
-  main( String[] args )
+  main( String[] args ) throws Exception
     {
+
     String docPath = args[ 0 ];
     String wcPath = args[ 1 ];
     String stopPath = args[ 2 ];
 
     Properties properties = new Properties();
+
+    ClassLoader cl = Main.class.getClassLoader();
+    URL prop4Url = cl.getResource("part4.properties");
+    System.out.println("Found properties: " + prop4Url);
+    InputStream propertiesAsStream = prop4Url.openStream();
+    properties.load(propertiesAsStream);
+    propertiesAsStream.close();
     AppProps.setApplicationJarClass( properties, Main.class );
     HadoopFlowConnector flowConnector = new HadoopFlowConnector( properties );
 

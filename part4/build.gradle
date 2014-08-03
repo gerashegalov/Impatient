@@ -34,12 +34,12 @@ repositories {
   maven{ url 'http://conjars.org/repo/' }
 }
 
-ext.cascadingVersion = '2.5.2'
-ext.hadoopVersion = '2.2.0'
+ext.cascadingVersion = '3.0.0-wip-dev'
+ext.hadoopVersion = '3.0.0-SNAPSHOT'
 
 dependencies {
-  compile( group: 'cascading', name: 'cascading-core', version: cascadingVersion )
-  compile( group: 'cascading', name: 'cascading-hadoop2-mr1', version: cascadingVersion )
+  providedCompile( group: 'cascading', name: 'cascading-core', version: cascadingVersion )
+  providedCompile( group: 'cascading', name: 'cascading-hadoop2-mr1', version: cascadingVersion )
   providedCompile( group: 'org.apache.hadoop', name: 'hadoop-mapreduce-client-core', version: hadoopVersion )
 }
 
@@ -52,7 +52,7 @@ jar {
   }
 
   manifest {
-    attributes( "Main-Class": "impatient/Main" )
+    attributes( "Main-Class": "impatient/part4/Main" )
   }
 }
 

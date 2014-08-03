@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-package impatient;
+package impatient.part4;
 
 import cascading.flow.FlowProcess;
 import cascading.operation.BaseOperation;

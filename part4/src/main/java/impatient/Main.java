@@ -72,9 +72,8 @@ public class
     Tap wcTap = new Hfs( new TextDelimited( true, "\t" ), wcPath );
 
     Fields stop = new Fields( "stop" );
-    Tap stopTap = Boolean.valueOf((String)properties.get("cacheStopwords"))
-        ? new Hfs( new TextDelimited( stop, true, "\t" ), stopPath )
-        : new Lfs( new TextDelimited( stop, true, "\t" ), stopPath );
+    Tap stopTap = new Hfs( new TextDelimited( stop, true, "\t" ), stopPath )
+        .withDistributedCache();
 
 
     // specify a regex operation to split the "document" text lines into a token stream

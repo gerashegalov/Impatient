@@ -72,8 +72,7 @@ public class
     Tap wcTap = new Hfs( new TextDelimited( true, "\t" ), wcPath );
 
     Fields stop = new Fields( "stop" );
-    Tap stopTap = new Hfs( new TextDelimited( stop, true, "\t" ), stopPath )
-        .withDistributedCache();
+    Tap stopTap = new Hfs( new TextDelimited( stop, true, "\t" ), stopPath );
 
 
     // specify a regex operation to split the "document" text lines into a token stream
@@ -90,7 +89,10 @@ public class
     // perform a left join to remove stop words, discarding the rows
     // which joined with stop words, i.e., were non-null after left join
     Pipe stopPipe = new Pipe( "stop" );
-    Pipe tokenPipe = new HashJoin( docPipe, token, stopPipe, stop, new LeftJoin() );
+
+    Pipe theStopPipe = new Each( stopPipe, stop, new RegexFilter( "the" ) );
+
+    Pipe tokenPipe = new HashJoin( docPipe, token, theStopPipe, stop, new LeftJoin() );
     tokenPipe = new Each( tokenPipe, stop, new RegexFilter( "^$" ) );
 
     // determine the word counts

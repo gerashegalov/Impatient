@@ -22,6 +22,7 @@ package impatient.part4;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Properties;
 
 import cascading.flow.Flow;
@@ -30,6 +31,7 @@ import cascading.flow.hadoop.HadoopFlowConnector;
 import cascading.operation.aggregator.Count;
 import cascading.operation.regex.RegexFilter;
 import cascading.operation.regex.RegexSplitGenerator;
+import cascading.pipe.CoGroup;
 import cascading.pipe.Each;
 import cascading.pipe.Every;
 import cascading.pipe.GroupBy;
@@ -54,7 +56,12 @@ public class
 
     String docPath = args[ 0 ];
     String wcPath = args[ 1 ];
-    String stopPath = args[ 2 ];
+    String stopPath1 = args[ 2 ];
+
+    // to test multiple sources with identical file names but some differing
+    // dir on the path: args[ 2 ] is /data1/en.stop args[ 3 ] is /data2/en.stop
+    //
+    String stopPath2 = args[ 3 ];
 
     Properties properties = new Properties();
 
@@ -71,9 +78,11 @@ public class
     Tap docTap = new Hfs( new TextDelimited( true, "\t" ), docPath );
     Tap wcTap = new Hfs( new TextDelimited( true, "\t" ), wcPath );
 
-    Fields stop = new Fields( "stop" );
-    Tap stopTap = new Hfs( new TextDelimited( stop, true, "\t" ), stopPath );
+    Fields stop1 = new Fields( "stop1" );
+    Tap stopTap1 = new Hfs( new TextDelimited( stop1, true, "\t" ), stopPath1 );
 
+    Fields stop2 = new Fields( "stop2" );
+    Tap stopTap2 = new Hfs( new TextDelimited( stop2, true, "\t" ), stopPath2 );
 
     // specify a regex operation to split the "document" text lines into a token stream
     Fields token = new Fields( "token" );
@@ -88,12 +97,24 @@ public class
 
     // perform a left join to remove stop words, discarding the rows
     // which joined with stop words, i.e., were non-null after left join
-    Pipe stopPipe = new Pipe( "stop" );
+    Pipe stopPipe1 = new Pipe( "stop1" );
+    Pipe stopPipe2 = new Pipe( "stop2" );
+    Pipe tokenPipe = docPipe;
 
-    Pipe theStopPipe = new Each( stopPipe, stop, new RegexFilter( "the" ) );
+    tokenPipe = new Each(
+        Boolean.valueOf( ( String )properties.get( "stop1.hashjoin" ) )
+            ? new HashJoin( tokenPipe, token, stopPipe1, stop1, new LeftJoin() )
+            : new CoGroup( tokenPipe, token, stopPipe1, stop1, new LeftJoin() ),
+        stop1, new RegexFilter( "^$" ) );
 
-    Pipe tokenPipe = new HashJoin( docPipe, token, theStopPipe, stop, new LeftJoin() );
-    tokenPipe = new Each( tokenPipe, stop, new RegexFilter( "^$" ) );
+    // test intermediate input into HashJoin, gby to force an identity MR job
+    if( Boolean.valueOf( ( String )properties.get( "stop2.groupby" ) ) )
+      stopPipe2 = new GroupBy( stopPipe2, stop2 );
+
+    HashJoin hashJoin2 = new HashJoin(tokenPipe, token, stopPipe2, stop2, new LeftJoin());
+
+
+    tokenPipe = new Each( hashJoin2, stop2, new RegexFilter( "^$" ) );
 
     // determine the word counts
     Pipe wcPipe = new Pipe( "wc", tokenPipe );
@@ -105,7 +126,8 @@ public class
     FlowDef flowDef = FlowDef.flowDef()
      .setName( "wc" )
      .addSource( docPipe, docTap )
-     .addSource( stopPipe, stopTap )
+     .addSource( stopPipe1, stopTap1 )
+     .addSource( stopPipe2, stopTap2 )
      .addTailSink( wcPipe, wcTap );
 
     // write a DOT file and run the flow
